@@ -11,8 +11,8 @@ nest = tf.contrib.framework.nest
 
 # Parameters
 gap = 5  # Time steps to predict into the future
-T = 500  # Length of training time series
-# N = 32  # Size of recurrent neural network
+T = 600  # Length of training time series
+N = [32]  # Size of recurrent neural network
 n = 1  # Number of training sequences
 n_test = 1  # Number of test sequences
 m = 1  # Output dimension
@@ -66,7 +66,9 @@ targets = tf.placeholder(tf.float32, [None, None, m])
 # cell = tf.nn.rnn_cell.LSTMCell(state_size, state_is_tuple=True)
 # cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers, state_is_tuple=True)
 # cell = tf.nn.rnn_cell.BasicLSTMCell(N)
+
 # cell = tf.nn.rnn_cell.LSTMCell(N)
+
 # num_layers = 2
 # n_cell_h1 = 20
 # n_cell_h2 = 15
@@ -76,6 +78,7 @@ targets = tf.placeholder(tf.float32, [None, None, m])
 # cell = tf.nn.rnn_cell.MultiRNNCell([cell_h1, cell_h2])
 
 n_cells_layers = [20, 15]
+# n_cells_layers = [32]
 cells = [tf.nn.rnn_cell.LSTMCell(num_units=n) for n in n_cells_layers]
 cell = tf.nn.rnn_cell.MultiRNNCell(cells)
 
@@ -151,9 +154,9 @@ prediction  = tf.reshape(prediction_flat, [-1, tf.shape(inputs)[1], m])
 
 # Error function and optimizer
 loss = tf.losses.mean_squared_error(targets_flat, prediction_flat)
-print("\n\n")
-print("loss.get_shape = " + str(loss.get_shape()))
-print("\n\n")
+# print("\n\n")
+# print("loss.get_shape = " + str(loss.get_shape()))
+# print("\n\n")
 train_step = tf.train.AdamOptimizer(lr).minimize(loss)
 
 time = np.arange(train_X.size)*0.012
