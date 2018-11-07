@@ -12,7 +12,7 @@ nest = tf.contrib.framework.nest
 # Parameters
 gap = 5  # Time steps to predict into the future
 T = 500  # Length of training time series
-N = 32  # Size of recurrent neural network
+# N = 32  # Size of recurrent neural network
 n = 1  # Number of training sequences
 n_test = 1  # Number of test sequences
 m = 1  # Output dimension
@@ -22,8 +22,16 @@ lr = 0.01  # Learning rate
 
 # Load and arrange data
 raw_data = np.genfromtxt('data/lorenz1000.dt')
+
+
+# raw_data = np.genfromtxt('data/data_adjust-1.csv',delimiter = ",")
+# train_X = raw_data[1:T+1,0]
+# print(train_X.size)
+# train_Y = raw_data[1+gap:T+gap+1,9]
+
 train_X = raw_data[0:T]
-train_Y = raw_data[0+gap:T+gap]
+train_Y = raw_data[gap:T+gap]
+
 test_X = raw_data[T:-gap]
 test_Y = raw_data[T+gap:]
 train_X.resize(n, train_X.size, d)
@@ -39,28 +47,42 @@ targets = tf.placeholder(tf.float32, [None, None, m])
 # cell = tf.nn.rnn_cell.LSTMCell(state_size, state_is_tuple=True)
 # cell = tf.nn.rnn_cell.MultiRNNCell([cell] * num_layers, state_is_tuple=True)
 # cell = tf.nn.rnn_cell.BasicLSTMCell(N)
-cell = tf.nn.rnn_cell.LSTMCell(N)
+# cell = tf.nn.rnn_cell.LSTMCell(N)
 # num_layers = 2
-n_cell_h1 = 20
-n_cell_h2 = 15
-cell_h1 = tf.nn.rnn_cell.LSTMCell(n_cell_h1)
-print("n_cell_h1.get_config = " + str(cell_h1.state_size))
-cell_h2 = tf.nn.rnn_cell.LSTMCell(n_cell_h2)
+# n_cell_h1 = 20
+# n_cell_h2 = 15
+# cell_h1 = tf.nn.rnn_cell.LSTMCell(n_cell_h1)
+# print("n_cell_h1.get_config = " + str(cell_h1.state_size))
+# cell_h2 = tf.nn.rnn_cell.LSTMCell(n_cell_h2)
+# cell = tf.nn.rnn_cell.MultiRNNCell([cell_h1, cell_h2])
+
+n_cells_layers = [20, 15]
+cells = [tf.nn.rnn_cell.LSTMCell(num_units=n) for n in n_cells_layers]
+cell = tf.nn.rnn_cell.MultiRNNCell(cells)
+
+
+
+
+
+# print("cell.state_size = " + str(cell.state_size))
+
 # print(([cell]*num_layers).state_size)
 # cell = tf.nn.rnn_cell.MultiRNNCell([cell for n in range(num_layers)], state_is_tuple=True)
-# cell = tf.nn.rnn_cell.MultiRNNCell([cell_h1, cell_h2])
+
 print("cell.state_size = " + str(cell.state_size))
 print("cell.get_config = " + str(cell.get_config))
 
 # A state with all variables set to zero
 zero_state = cell.zero_state(n, tf.float32)
+# print("zero_state = " + str(zero_state[0]))
 # State
 state =  nest.map_structure(lambda tensor: tf.Variable(tensor, trainable=False), zero_state)
-print("state = " + str(state))
+print("state0 ########################## = " + str(state[0]) + "state1 ########################## = " + str(state[1]))
 
 # RNN
 rnn_output, new_state = tf.nn.dynamic_rnn(cell, inputs, initial_state=state, dtype=tf.float32)
-print("rnn_output.shape = " + str(rnn_output.shape))
+print("\nrnn_output.shape = " + str(rnn_output.shape))
+print("new_state.shape = " + str(new_state[1]))
 
 print("\n\n")
 
@@ -73,18 +95,36 @@ reset_state  = nest.flatten(reset_state)
 with tf.control_dependencies(update_state):  # Update_state is already a list
     rnn_output = tf.identity(rnn_output)
 
+print("rnn_output.shape = " + str(rnn_output.shape))
+
+print("\n\n")
+
 # Note the following reshaping:
 #   We want a prediction for every time step.
 #   Weights of fully connected layer should be the same (shared) for every time step.
 #   This is achieved by flattening the first two dimensions.
 #   Now all time steps look the same as individual inputs in a batch fed into a feed-forward network.
 # rnn_output_flat = tf.reshape(rnn_output, [-1, n_cell_h1, n_cell_h2])
-rnn_output_flat = tf.reshape(rnn_output, [-1, N])
-# print(rnn_output_flat.get_shape())
+
+# rnn_output_flat = tf.reshape(rnn_output, [-1, N])
+
+rnn_output_flat = tf.reshape(rnn_output, [-1, n_cells_layers[1]])
+print("\n\n")
+print("rnn_output_flat.get_shape = " + str(rnn_output_flat.get_shape()))
+print("\n\n")
 prediction_flat = tf.layers.dense(rnn_output_flat, m, activation=None)
+print("\n\n")
+print("prediction_flat.get_shape = " + str(prediction_flat.get_shape()))
+print("\n\n")
 
 targets_flat = tf.reshape(targets, [-1, m])
+print("\n\n")
+print("targets_flat.get_shape = " + str(targets_flat.get_shape()))
+print("\n\n")
 prediction  = tf.reshape(prediction_flat, [-1, tf.shape(inputs)[1], m])
+print("\n\n")
+print("prediction.get_shape = " + str(prediction.get_shape()))
+print("\n\n")
 #my changes
 
 # print(rnn_output_flat.get_shape())
@@ -92,6 +132,9 @@ prediction  = tf.reshape(prediction_flat, [-1, tf.shape(inputs)[1], m])
 
 # Error function and optimizer
 loss = tf.losses.mean_squared_error(targets_flat, prediction_flat)
+print("\n\n")
+print("loss.get_shape = " + str(loss.get_shape()))
+print("\n\n")
 train_step = tf.train.AdamOptimizer(lr).minimize(loss)
 
 # Create session and initialize variables
