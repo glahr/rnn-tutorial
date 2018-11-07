@@ -5,6 +5,8 @@
     """
 import numpy as np
 import tensorflow as tf
+# import matplotlib
+import matplotlib.pyplot as plt
 
 # Parameters
 gap = 5  # Time steps to predict into the future
@@ -27,6 +29,15 @@ train_X.resize(n, train_X.size, d)
 train_Y.resize(n, train_Y.size, m)
 test_X.resize(n_test, test_X.size, d)
 test_Y.resize(n_test, test_Y.size, m)
+
+# plt.title("Testing the model - with OutputProjectionWrapper", fontsize=14)
+# print(train_X.reshape((500,1)))
+plt.plot(train_X.reshape((500,1)), train_Y.reshape((500,1)), markersize=10, label="instance")
+# plt.plot(t_instance[1:], fz[section_init:section_final], "w*", markersize=10, label="target")
+# plt.plot(t_instance[1:], y_pred[0,:,0], "r.", markersize=10, label="prediction")
+# plt.legend(loc="upper left")
+# plt.xlabel("Time")
+plt.show()
 
 # Placeholders
 inputs  = tf.placeholder(tf.float32, [None, None, d])
