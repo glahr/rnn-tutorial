@@ -12,12 +12,12 @@ nest = tf.contrib.framework.nest
 # Parameters
 gap = 5  # Time steps to predict into the future
 T = 600  # Length of training time series
-N = [32]  # Size of recurrent neural network
+# N = [32]  # Size of recurrent neural network
 n = 1  # Number of training sequences
 n_test = 1  # Number of test sequences
 m = 1  # Output dimension
 d = 1  # Input dimension
-epochs = 200  # Maximum number of epochs
+epochs = 400  # Maximum number of epochs
 lr = 0.01  # Learning rate
 
 # Load and arrange data
