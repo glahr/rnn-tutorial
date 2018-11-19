@@ -49,14 +49,17 @@ prediction = tf.nn.softmax(logits)
 
 # Define loss and optimizer
 xentropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=Y)
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, name = "Adam")
+loss_op = tf.reduce_mean(xentropy)
 train_op = optimizer.minimize(loss_op, name = "train_op")
+tf.summary.scalar("loss", loss_op)
 
 # Evaluate model (with test logits, for dropout to be disabled)
 correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
 # Initialize the variables (i.e. assign their default value)
+merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter('tensorboard/2')
 init = tf.global_variables_initializer()
 
@@ -72,6 +75,7 @@ with tf.Session() as sess:
         batch_x = batch_x.reshape((batch_size, timesteps, num_input))
         # Run optimization op (backprop)
         sess.run(train_op, feed_dict={X: batch_x, Y: batch_y})
+        
         if step % display_step == 0 or step == 1:
             # Calculate batch loss and accuracy
             loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
@@ -79,6 +83,10 @@ with tf.Session() as sess:
             print("Step " + str(step) + ", Minibatch Loss= " + \
                   "{:.4f}".format(loss) + ", Training Accuracy= " + \
                   "{:.3f}".format(acc))
+        if step % 10 == 0:
+            summary = sess.run(merged, feed_dict = {X: batch_x, Y: batch_y})
+            writer.add_summary(summary, step)
+            # writer.flush()
 
     print("Optimization Finished!")
 
