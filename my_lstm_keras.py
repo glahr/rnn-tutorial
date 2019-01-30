@@ -3,6 +3,12 @@ from __future__ import print_function
 import tensorflow as tf
 from tensorflow.contrib import rnn
 
+import keras
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+from keras.optimizers import Adam
+
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
@@ -17,9 +23,9 @@ handle 28 sequences of 28 steps for every sample.
 
 # Training Parameters
 learning_rate = 0.001
-training_steps = 10000
+training_steps = 3000
 batch_size = 128
-display_step = 200
+display_step = 100
 
 # Network Parameters
 num_input = 28 # MNIST data input (img shape: 28*28)
@@ -33,6 +39,13 @@ Y = tf.placeholder("float", [None, num_classes], name="Y_plc")
 
 n_h1 = 20
 n_h2 = 15
+
+model = Sequential()
+model.add(LSTM(20, input_shape = (num_input, num_input), return_sequences = True))
+# model.add(LSTM(1, return_sequences = True))
+model.add(LSTM(15))
+model.add(Dense(num_classes, activation = "relu"))
+model.compile(loss="mse", optimizer=Adam(lr=learning_rate), metrics = ['accuracy'])
 
 def RNN(x):
 
@@ -76,13 +89,20 @@ with tf.Session() as sess:
         # Run optimization op (backprop)
         sess.run(train_op, feed_dict={X: batch_x, Y: batch_y})
 
+        model.fit(batch_x, batch_y, verbose=0)
+
         if step % display_step == 0 or step == 1:
             # Calculate batch loss and accuracy
-            loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
+            loss, accuracia = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
                                                                  Y: batch_y})
+            loss_keras = model.evaluate(batch_x, batch_y, verbose = 0)
+            # print(loss_keras)
+
             print("Step " + str(step) + ", Minibatch Loss= " + \
-                  "{:.4f}".format(loss) + ", Training Accuracy= " + \
-                  "{:.3f}".format(acc))
+                  "{:.4f}".format(loss) + ", Minibatch Loss (keras)= " + \
+                        "{:.4f}".format(loss_keras[0]) + ", Training Accuracy= " + \
+                  "{:.3f}".format(accuracia) + ", Training Accuracy (keras)= " + \
+            "{:.3f}".format(loss_keras[1]))
         if step % 10 == 0:
             summary = sess.run(merged, feed_dict = {X: batch_x, Y: batch_y})
             writer.add_summary(summary, step)
